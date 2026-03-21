@@ -10,8 +10,6 @@ include/file_handler.h — Протоколы функций для работы
 
 src/file_handler.c — Реализация загрузки, сохранения и создания бэкапов.
 
-src/record.c — Вспомогательный файл структуры.
-
 src/sort.c, src/binary_search.c — Заготовки для алгоритмов (задача Человека №2).
 
 CMakeLists.txt — Скрипт для сборки библиотеки libcore.a.
