@@ -110,13 +110,36 @@ void free_optimal_song_tree(ResultSongTreeNode *node)
     free(node);
 }
 
-Song* find_song_by_title(Song *songs, int count, const char *title)
+static void collect_all_matches(ResultSongTreeNode *node, const char *title, Song **results, int max_results, int *found)
 {
-    if (count <= 0 || !songs || !title || title[0] == '\0')
-        return NULL;
+    if (!node || *found >= max_results) 
+        return;
+
+    int cmp = strcmp(node->song, title);
+
+    if (cmp == 0) {
+        results[*found] = node->song_ptr;
+        (*found)++;
+        
+        collect_all_matches(node->left, title, results, max_results, found);
+        collect_all_matches(node->right, title, results, max_results, found);
+    }
+    else if (cmp > 0) {
+        collect_all_matches(node->left, title, results, max_results, found);
+    }
+    else {
+        collect_all_matches(node->right, title, results, max_results, found);
+    }
+}
+
+int find_song_by_title(Song *songs, int count, const char *title,
+                       Song **results, int max_results)
+{
+    if (count <= 0 || !songs || !title || !results || max_results <= 0)
+        return 0;
 
     Song **ptrs = malloc(count * sizeof(Song*));
-    if (!ptrs) return NULL;
+    if (!ptrs) return 0;
 
     for (int i = 0; i < count; i++) {
         ptrs[i] = &songs[i];
@@ -126,10 +149,11 @@ Song* find_song_by_title(Song *songs, int count, const char *title)
 
     ResultSongTreeNode *root = build_optimal_song_tree(ptrs, count);
 
-    Song *result = search_in_optimal_song_tree(root, title);
+    int found = 0;
+    collect_all_matches(root, title, results, max_results, &found);
 
     free_optimal_song_tree(root);
     free(ptrs);
 
-    return result;
+    return found;
 }
