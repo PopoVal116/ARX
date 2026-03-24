@@ -74,7 +74,7 @@ ResultSongTreeNode* build_optimal_song_tree(Song **songs, int numSongs)
 
     for (int i = 0; i < numSongs; i++) temp[i] = songs[i];
 
-    quick_sort_by_song(temp, 0, numSongs - 1);
+    quick_sort_by_title_asc(temp, 0, numSongs - 1);
 
     int count;
     ResultSongNode *stats = collect_songs(temp, numSongs, &count);
