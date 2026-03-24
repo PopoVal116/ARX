@@ -109,3 +109,27 @@ void free_optimal_song_tree(ResultSongTreeNode *node)
     free_optimal_song_tree(node->right);
     free(node);
 }
+
+Song* find_song_by_title(Song *songs, int count, const char *title)
+{
+    if (count <= 0 || !songs || !title || title[0] == '\0')
+        return NULL;
+
+    Song **ptrs = malloc(count * sizeof(Song*));
+    if (!ptrs) return NULL;
+
+    for (int i = 0; i < count; i++) {
+        ptrs[i] = &songs[i];
+    }
+
+    quick_sort_by_title_asc(ptrs, 0, count - 1);
+
+    ResultSongTreeNode *root = build_optimal_song_tree(ptrs, count);
+
+    Song *result = search_in_optimal_song_tree(root, title);
+
+    free_optimal_song_tree(root);
+    free(ptrs);
+
+    return result;
+}
