@@ -1,4 +1,5 @@
 #include "optimal_tree.h"
+#include "binary_search.h"
 #include "sort.h"
 #include <string.h>
 #include <stdlib.h>
@@ -7,21 +8,34 @@
 typedef struct {
     char song[100];
     int weight;
-    Song *song_ptr;
+    Song **song_ptrs;
 } ResultSongNode;
 
-static ResultSongNode* collect_songs(Song **sorted_songs, int numSongs, int *count)
+static ResultSongNode* collect_songs(Song **sorted_songs, int numSongs, int *unique_count)
 {
-    *count = numSongs;
+    if (numSongs <= 0) return NULL;
+
     ResultSongNode *stats = malloc(numSongs * sizeof(ResultSongNode));
-    if (!stats) return NULL;
+    int count = 0;
 
     for (int i = 0; i < numSongs; i++) {
-        strcpy(stats[i].song, sorted_songs[i]->song);
-        stats[i].weight   = 1;       
-        stats[i].song_ptr = sorted_songs[i];
+        if (count > 0 && strcmp(stats[count - 1].song, sorted_songs[i]->song) == 0) {
+            int current_w = stats[count - 1].weight;
+            stats[count - 1].song_ptrs = realloc(stats[count - 1].song_ptrs, (current_w + 1) * sizeof(Song*));
+            stats[count - 1].song_ptrs[current_w] = sorted_songs[i];
+            stats[count - 1].weight++;
+        } 
+        else {
+            strcpy(stats[count].song, sorted_songs[i]->song);
+            stats[count].weight = 1;
+            stats[count].song_ptrs = malloc(sizeof(Song*));
+            stats[count].song_ptrs[0] = sorted_songs[i];
+            count++;
+        }
     }
-    return stats;
+
+    *unique_count = count;
+    return realloc(stats, count * sizeof(ResultSongNode));
 }
 
 static ResultSongTreeNode* build_tree(ResultSongNode *stats, int start, int end)
@@ -57,10 +71,11 @@ static ResultSongTreeNode* build_tree(ResultSongNode *stats, int start, int end)
     if (!node) return NULL;
 
     strcpy(node->song, stats[best].song);
-    node->weight   = stats[best].weight;
-    node->song_ptr = stats[best].song_ptr;
-    node->left     = build_tree(stats, start, best - 1);
-    node->right    = build_tree(stats, best + 1, end);
+    node->weight = stats[best].weight;
+    node->song_ptrs = stats[best].song_ptrs; 
+    node->record_count = stats[best].weight;
+    node->left = build_tree(stats, start, best - 1);
+    node->right = build_tree(stats, best + 1, end);
 
     return node;
 }
@@ -95,7 +110,7 @@ Song* search_in_optimal_song_tree(ResultSongTreeNode *root, const char *song_tit
     if (!root) return NULL;
 
     int cmp = strcmp(root->song, song_title);
-    if (cmp == 0) return root->song_ptr;
+    if (cmp == 0) return root->song_ptrs;
     if (cmp > 0)
         return search_in_optimal_song_tree(root->left, song_title);
     else
@@ -107,6 +122,10 @@ void free_optimal_song_tree(ResultSongTreeNode *node)
     if (!node) return;
     free_optimal_song_tree(node->left);
     free_optimal_song_tree(node->right);
+    
+    if (node->song_ptrs) {
+        free(node->song_ptrs); 
+    }
     free(node);
 }
 
@@ -118,11 +137,10 @@ static void collect_all_matches(ResultSongTreeNode *node, const char *title, Son
     int cmp = strcmp(node->song, title);
 
     if (cmp == 0) {
-        results[*found] = node->song_ptr;
-        (*found)++;
-        
-        collect_all_matches(node->left, title, results, max_results, found);
-        collect_all_matches(node->right, title, results, max_results, found);
+        for (int i = 0; i < node->record_count && *found < max_results; i++) {
+            results[*found] = node->song_ptrs[i];
+            (*found)++;
+        }
     }
     else if (cmp > 0) {
         collect_all_matches(node->left, title, results, max_results, found);
@@ -132,26 +150,39 @@ static void collect_all_matches(ResultSongTreeNode *node, const char *title, Son
     }
 }
 
-int find_song_by_title(Song *songs, int count, const char *title,
-                       Song **results, int max_results)
+int find_song_by_title(Song *songs, int count, const char *title, Song **results, int max_results)
 {
     if (count <= 0 || !songs || !title || !results || max_results <= 0)
         return 0;
 
     Song **ptrs = malloc(count * sizeof(Song*));
     if (!ptrs) return 0;
-
     for (int i = 0; i < count; i++) {
         ptrs[i] = &songs[i];
     }
 
     quick_sort_by_title_asc(ptrs, 0, count - 1);
 
-    ResultSongTreeNode *root = build_optimal_song_tree(ptrs, count);
+    int L = binary_search_by_title(ptrs, count, title, 1); 
+    int R = binary_search_by_title(ptrs, count, title, 0);
+
+    if (L == -1) {
+        free(ptrs);
+        return 0;
+    }
+
+    int found_range = R - L + 1;
+
+    int unique_cnt;
+
+    ResultSongNode *stats = collect_songs(ptrs + L, found_range, &unique_cnt);
+    ResultSongTreeNode *root = build_tree(stats, 0, unique_cnt - 1);
 
     int found = 0;
     collect_all_matches(root, title, results, max_results, &found);
 
+
+    free(stats);
     free_optimal_song_tree(root);
     free(ptrs);
 

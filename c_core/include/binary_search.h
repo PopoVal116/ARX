@@ -3,6 +3,6 @@
 
 #include "record.h"
 
-int binary_search_by_song(Song **arr, int n, const char *song_title);
+int binary_search_by_title(Song **arr, int n, const char *title, int find_first);
 
 #endif
