@@ -12,9 +12,12 @@ typedef struct ResultSongTreeNode {
     struct ResultSongTreeNode *right;
 } ResultSongTreeNode;
 
+int find_song_by_title(Song *songs, int count, const char *title, Song **results, int max_results);
+
+ResultSongTreeNode* build_optimal_tree_from_songs(Song *songs, int count);
+
 ResultSongTreeNode* build_optimal_song_tree(Song **songs, int numSongs);
+
 void free_optimal_song_tree(ResultSongTreeNode *node);
-int find_song_by_title(Song *songs, int count, const char *title,
-                       Song **results, int max_results);
-                                             
+
 #endif
