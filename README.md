@@ -52,9 +52,11 @@ gcc data/generate_test_data.c -I./c_core/include -o data_gen
 
 ### 3. Сборка GUI
 Для запуска GUI:
+```Bash
 cd cpp_gui/architecture
 make
 make run
+```
 
 Статус разработки (Человек №1)
 [x] Проектирование структуры Song.
