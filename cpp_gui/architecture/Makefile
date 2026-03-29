@@ -1,6 +1,8 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Iimgui -Iimgui/backends -I/usr/include/SDL2
+CXXFLAGS = -std=c++11 -Iimgui -Iimgui/backends -I/usr/include/SDL2  -I../../c_core/include #путь к заголовочным файлам
 LIBS = -lSDL2 -lGLEW -lGL -lpthread
+
+LDFLAGS = -L../../c_core/build -lcore #путь к директории с библиотекой
 
 IMGUI_SOURCES = imgui/imgui.cpp \
                 imgui/imgui_draw.cpp \
@@ -12,13 +14,10 @@ IMGUI_SOURCES = imgui/imgui.cpp \
 all: arh_gui
 
 arh_gui: main.cpp $(IMGUI_SOURCES)
-	$(CXX) $(CXXFLAGS) main.cpp $(IMGUI_SOURCES) -o $@ $(LIBS)
+	$(CXX) $(CXXFLAGS) main.cpp $(IMGUI_SOURCES) -o $@ $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -f arh_gui
 
 run: arh_gui
 	./arh_gui
-
-
-# Находясь в папке arh: wget https://raw.githubusercontent.com/nothings/stb/master/stb_image.h

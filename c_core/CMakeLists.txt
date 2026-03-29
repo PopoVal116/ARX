@@ -7,6 +7,7 @@ add_library(core STATIC
     src/file_handler.c 
     src/sort.c
     src/binary_search.c
+    src/optimal_tree.c
 )
 
 #libcore.a

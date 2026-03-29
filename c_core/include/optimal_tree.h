@@ -3,6 +3,10 @@
 
 #include "record.h"
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 typedef struct ResultSongTreeNode {
     char song[100];              
     int weight;
@@ -15,9 +19,11 @@ typedef struct ResultSongTreeNode {
 int find_song_by_title(Song *songs, int count, const char *title, Song **results, int max_results);
 
 ResultSongTreeNode* build_optimal_tree_from_songs(Song *songs, int count);
-
 ResultSongTreeNode* build_optimal_song_tree(Song **songs, int numSongs);
-
 void free_optimal_song_tree(ResultSongTreeNode *node);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
