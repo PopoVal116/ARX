@@ -1,5 +1,6 @@
 #include "sort.h"
 #include <string.h>
+#include <stdlib.h>
 
 void swap(Song **a, Song **b) {
     Song *t = *a; *a = *b; *b = t;
@@ -45,4 +46,24 @@ void quick_sort_by_title_desc(Song **arr, int low, int high) {
         quick_sort_by_title_desc(arr, low, pi - 1);
         quick_sort_by_title_desc(arr, pi + 1, high);
     }
+}
+
+void sort_songs_by_title_asc(Song *songs, int count, Song **ptrs)
+{
+    if (count <= 0 || !songs || !ptrs) return;
+
+    for (int i = 0; i < count; i++)
+        ptrs[i] = &songs[i];
+
+    quick_sort_by_title_asc(ptrs, 0, count - 1);
+}
+
+void sort_songs_by_title_desc(Song *songs, int count, Song **ptrs)
+{
+    if (count <= 0 || !songs || !ptrs) return;
+
+    for (int i = 0; i < count; i++)
+        ptrs[i] = &songs[i];
+
+    quick_sort_by_title_desc(ptrs, 0, count - 1);
 }
