@@ -148,6 +148,8 @@ void run_gui(Song records[], int& record_count) {
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         1400, 900, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
+    SDL_StartTextInput();
+
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1); 
@@ -534,6 +536,7 @@ void run_gui(Song records[], int& record_count) {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
+    SDL_StopTextInput();
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
