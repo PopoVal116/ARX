@@ -3,21 +3,20 @@
 
 #include "record.h"
 
-typedef struct ResultSongTreeNode {
-    char song[100];              
-    int weight;
-    Song **song_ptrs;   
-    int record_count;          
-    struct ResultSongTreeNode *left;
-    struct ResultSongTreeNode *right;
-} ResultSongTreeNode;
+typedef struct ResultCompositeTreeNode {
+    char author[100];
+    char genre[50];          
+    int weight;           
+    Song **song_ptrs;          
+    int record_count;
+    struct ResultCompositeTreeNode *left;
+    struct ResultCompositeTreeNode *right;
+} ResultCompositeTreeNode;
 
-int find_song_by_title(Song *songs, int count, const char *title, Song **results, int max_results);
+ResultCompositeTreeNode* build_optimal_tree_by_author_genre(Song **songs, int numSongs);
 
-ResultSongTreeNode* build_optimal_tree_from_songs(Song *songs, int count);
+int find_songs_by_author_genre(Song *songs, int count, const char *author, const char *genre, Song **results, int max_results);
 
-ResultSongTreeNode* build_optimal_song_tree(Song **songs, int numSongs);
-
-void free_optimal_song_tree(ResultSongTreeNode *node);
+void free_optimal_composite_tree(ResultCompositeTreeNode *node);
 
 #endif
