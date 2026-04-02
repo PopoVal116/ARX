@@ -1,47 +1,57 @@
 #include "optimal_tree.h"
-#include "binary_search.h"
 #include "sort.h"
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
 
+/* ====================== ВНУТРЕННИЕ СТРУКТУРЫ ====================== */
+
 typedef struct {
-    char song[100];
+    char author[100];
+    char genre[50];
     int weight;
     Song **song_ptrs;
-} ResultSongNode;
+} CompositeStatsNode;
 
-static ResultSongNode* collect_songs(Song **sorted_songs, int numSongs, int *unique_count)
+/* ====================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================== */
+
+static CompositeStatsNode* collect_composite(Song **sorted_songs, int numSongs, int *unique_count)
 {
     if (numSongs <= 0) return NULL;
 
-    ResultSongNode *stats = malloc(numSongs * sizeof(ResultSongNode));
+    CompositeStatsNode *stats = malloc(numSongs * sizeof(CompositeStatsNode));
     if (!stats) return NULL;
 
     int count = 0;
 
     for (int i = 0; i < numSongs; i++) {
-        if (count > 0 && strcmp(stats[count - 1].song, sorted_songs[i]->song) == 0) {
-            int w = stats[count - 1].weight;
-            stats[count - 1].song_ptrs = realloc(stats[count - 1].song_ptrs, (w + 1) * sizeof(Song*));
-            if (stats[count - 1].song_ptrs)
-                stats[count - 1].song_ptrs[w] = sorted_songs[i];
-            stats[count - 1].weight++;
+        Song *curr = sorted_songs[i];
+
+        if (count > 0 &&
+            strcmp(stats[count-1].author, curr->author) == 0 &&
+            strcmp(stats[count-1].genre,  curr->genre)  == 0) {
+
+            int w = stats[count-1].weight;
+            stats[count-1].song_ptrs = realloc(stats[count-1].song_ptrs, (w + 1) * sizeof(Song*));
+            if (stats[count-1].song_ptrs)
+                stats[count-1].song_ptrs[w] = curr;
+            stats[count-1].weight++;
         } else {
-            strcpy(stats[count].song, sorted_songs[i]->song);
+            strcpy(stats[count].author, curr->author);
+            strcpy(stats[count].genre,  curr->genre);
             stats[count].weight = 1;
             stats[count].song_ptrs = malloc(sizeof(Song*));
             if (stats[count].song_ptrs)
-                stats[count].song_ptrs[0] = sorted_songs[i];
+                stats[count].song_ptrs[0] = curr;
             count++;
         }
     }
 
     *unique_count = count;
-    return realloc(stats, count * sizeof(ResultSongNode));
+    return realloc(stats, count * sizeof(CompositeStatsNode));
 }
 
-static ResultSongTreeNode* build_tree(ResultSongNode *stats, int start, int end)
+static ResultCompositeTreeNode* build_composite_tree(CompositeStatsNode *stats, int start, int end)
 {
     if (start > end) return NULL;
 
@@ -70,124 +80,24 @@ static ResultSongTreeNode* build_tree(ResultSongNode *stats, int start, int end)
         }
     }
 
-    ResultSongTreeNode *node = malloc(sizeof(ResultSongTreeNode));
+    ResultCompositeTreeNode *node = malloc(sizeof(ResultCompositeTreeNode));
     if (!node) return NULL;
 
-    strcpy(node->song, stats[best].song);
-    node->weight = stats[best].weight;
-    node->song_ptrs = stats[best].song_ptrs;
+    strcpy(node->author, stats[best].author);
+    strcpy(node->genre,  stats[best].genre);
+    node->weight       = stats[best].weight;
+    node->song_ptrs    = stats[best].song_ptrs;
     node->record_count = stats[best].weight;
-    node->left = build_tree(stats, start, best - 1);
-    node->right = build_tree(stats, best + 1, end);
+
+    node->left  = build_composite_tree(stats, start, best - 1);
+    node->right = build_composite_tree(stats, best + 1, end);
 
     return node;
 }
 
-static void collect_all_matches(ResultSongTreeNode *node, const char *title,
-                                Song **results, int max_results, int *found)
-{
-    if (!node || *found >= max_results) return;
+/* ====================== ВЫСОКОУРОВНЕВЫЕ ФУНКЦИИ ====================== */
 
-    int cmp = strcmp(node->song, title);
-
-    if (cmp == 0) {
-        for (int i = 0; i < node->record_count && *found < max_results; i++) {
-            results[*found] = node->song_ptrs[i];
-            (*found)++;
-        }
-    }
-    else if (cmp > 0) {
-        collect_all_matches(node->left, title, results, max_results, found);
-    }
-    else {
-        collect_all_matches(node->right, title, results, max_results, found);
-    }
-}
-
-void free_optimal_song_tree(ResultSongTreeNode *node)
-{
-    if (!node) return;
-
-    free_optimal_song_tree(node->left);
-    free_optimal_song_tree(node->right);
-
-    if (node->song_ptrs) {
-        free(node->song_ptrs);
-        node->song_ptrs = NULL;
-    }
-    free(node);
-}
-
-ResultSongTreeNode* build_optimal_song_tree(Song **songs, int numSongs)
-{
-    if (numSongs <= 0 || !songs) return NULL;
-
-    Song **temp = malloc(numSongs * sizeof(Song*));
-    if (!temp) return NULL;
-
-    for (int i = 0; i < numSongs; i++) temp[i] = songs[i];
-
-    quick_sort_by_title_asc(temp, 0, numSongs - 1);
-
-    int unique_cnt;
-    ResultSongNode *stats = collect_songs(temp, numSongs, &unique_cnt);
-    if (!stats) {
-        free(temp);
-        return NULL;
-    }
-
-    ResultSongTreeNode *root = build_tree(stats, 0, unique_cnt - 1);
-
-    free(stats);
-    free(temp);
-    return root;
-}
-
-
-int find_song_by_title(Song *songs, int count, const char *title,
-                       Song **results, int max_results)
-{
-    if (count <= 0 || !songs || !title || !results || max_results <= 0)
-        return 0;
-
-    Song **ptrs = malloc(count * sizeof(Song*));
-    if (!ptrs) return 0;
-
-    for (int i = 0; i < count; i++)
-        ptrs[i] = &songs[i];
-
-    quick_sort_by_title_asc(ptrs, 0, count - 1);
-
-    int L = binary_search_by_title(ptrs, count, title, 1);  
-    int R = binary_search_by_title(ptrs, count, title, 0);  
-
-    if (L == -1) {
-        free(ptrs);
-        return 0;
-    }
-
-    int range_size = R - L + 1;
-    int unique_cnt;
-
-    ResultSongNode *stats = collect_songs(ptrs + L, range_size, &unique_cnt);
-    if (!stats) {
-        free(ptrs);
-        return 0;
-    }
-
-    ResultSongTreeNode *root = build_tree(stats, 0, unique_cnt - 1);
-
-    int found = 0;
-    collect_all_matches(root, title, results, max_results, &found);
-
-    free(stats);
-    free_optimal_song_tree(root);
-    free(ptrs);
-
-    return found;
-}
-
-ResultSongTreeNode* build_optimal_tree_from_songs(Song *songs, int count)
+ResultCompositeTreeNode* build_optimal_composite_tree(Song *songs, int count)
 {
     if (count <= 0 || !songs) return NULL;
 
@@ -197,10 +107,76 @@ ResultSongTreeNode* build_optimal_tree_from_songs(Song *songs, int count)
     for (int i = 0; i < count; i++)
         ptrs[i] = &songs[i];
 
-    quick_sort_by_title_asc(ptrs, 0, count - 1);
+    quick_sort_by_author_genre_asc(ptrs, 0, count - 1);
 
-    ResultSongTreeNode *root = build_optimal_song_tree(ptrs, count);
+    int unique_cnt;
+    CompositeStatsNode *stats = collect_composite(ptrs, count, &unique_cnt);
 
-    free(ptrs);
+    if (!stats) {
+        free(ptrs);
+        return NULL;
+    }
+
+    ResultCompositeTreeNode *root = build_composite_tree(stats, 0, unique_cnt - 1);
+
+    free(stats);
+    free(ptrs);                    
     return root;
+}
+
+/* Быстрый рекурсивный поиск по готовому дереву */
+static void collect_composite_matches(ResultCompositeTreeNode *node,
+                                      const char *author,
+                                      const char *genre,
+                                      Song **results,
+                                      int max_results,
+                                      int *found)
+{
+    if (!node || *found >= max_results) return;
+
+    int cmp_author = strcmp(node->author, author);
+    if (cmp_author == 0) {
+        int cmp_genre = strcmp(node->genre, genre);
+        if (cmp_genre == 0) {
+            for (int i = 0; i < node->record_count && *found < max_results; i++) {
+                results[*found] = node->song_ptrs[i];
+                (*found)++;
+            }
+            return;              
+        }
+    }
+
+    if (cmp_author < 0 || (cmp_author == 0 && strcmp(node->genre, genre) < 0)) {
+        collect_composite_matches(node->right, author, genre, results, max_results, found);
+    } else {
+        collect_composite_matches(node->left,  author, genre, results, max_results, found);
+    }
+}
+
+int search_by_author_and_genre(ResultCompositeTreeNode *tree,
+                               const char *author,
+                               const char *genre,
+                               Song **results,
+                               int max_results)
+{
+    if (!tree || !author || !genre || !results || max_results <= 0)
+        return 0;
+
+    int found = 0;
+    collect_composite_matches(tree, author, genre, results, max_results, &found);
+    return found;
+}
+
+void free_optimal_composite_tree(ResultCompositeTreeNode *node)
+{
+    if (!node) return;
+
+    free_optimal_composite_tree(node->left);
+    free_optimal_composite_tree(node->right);
+
+    if (node->song_ptrs) {
+        free(node->song_ptrs);
+        node->song_ptrs = NULL;
+    }
+    free(node);
 }

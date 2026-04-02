@@ -3,27 +3,38 @@
 
 #include "record.h"
 
-#ifdef __cplusplus 
-extern "C" {
-#endif
-
-typedef struct ResultSongTreeNode {
-    char song[100];              
+typedef struct ResultCompositeTreeNode {
+    char author[100];
+    char genre[50];
     int weight;
-    Song **song_ptrs;   
-    int record_count;          
-    struct ResultSongTreeNode *left;
-    struct ResultSongTreeNode *right;
-} ResultSongTreeNode;
+    Song **song_ptrs;
+    int record_count;
+    struct ResultCompositeTreeNode *left;
+    struct ResultCompositeTreeNode *right;
+} ResultCompositeTreeNode;
 
-int find_song_by_title(Song *songs, int count, const char *title, Song **results, int max_results);
+/* ====================== ВЫСОКОУРОВНЕВЫЕ ФУНКЦИИ ====================== */
 
-ResultSongTreeNode* build_optimal_tree_from_songs(Song *songs, int count);
-ResultSongTreeNode* build_optimal_song_tree(Song **songs, int numSongs);
-void free_optimal_song_tree(ResultSongTreeNode *node);
+/**
+ * Строит оптимальное дерево по составному ключу (author, genre)
+ * Вызывать один раз после загрузки базы данных
+ */
+ResultCompositeTreeNode* build_optimal_composite_tree(Song *songs, int count);
 
-#ifdef __cplusplus
-}
-#endif
+/**
+ * Быстрый поиск песен по точной паре автор + жанр
+ * Использует уже построенное дерево — очень быстро
+ */
+int search_by_author_and_genre(ResultCompositeTreeNode *tree,
+                               const char *author,
+                               const char *genre,
+                               Song **results,
+                               int max_results);
+
+/**
+ * Освобождение всего дерева
+ * Вызывать при завершении программы
+ */
+void free_optimal_composite_tree(ResultCompositeTreeNode *node);
 
 #endif
