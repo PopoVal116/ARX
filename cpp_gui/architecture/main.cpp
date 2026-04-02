@@ -178,11 +178,13 @@ void run_gui(Song records[], int& record_count) {
     int search_results_count = 0;
 
      // Поиск 2
-    char search_buffer_for_user_input2[256] = "";
+    char search_buffer_for_user_input2_author[100] = "";
+    char search_buffer_for_user_input2_genre[50] = ""; 
     char last_search_request2[256] = "";  
     bool show_search_result2 = false;
     Song* search_results2[MAX_RECORDS];
     int search_results_count2 = 0;
+    ResultCompositeTreeNode* optimal_tree = nullptr;
     
     // Сортировка
     SortState current_sort = SORT_NONE;
@@ -253,8 +255,9 @@ void run_gui(Song records[], int& record_count) {
             // ---------------------------ПОИСК----------------------------------------
            
             ImGui::Text("Binary Search:");
-            ImGui::InputText("##search", search_buffer_for_user_input, sizeof(search_buffer_for_user_input));
+            ImGui::Text("Song:");
             ImGui::SameLine();
+            ImGui::InputText("##search", search_buffer_for_user_input2_author, sizeof(search_buffer_for_user_input2_author));
             if (ImGui::Button("Find##binary")) {
                 search_results_count = 0;
 
@@ -337,14 +340,29 @@ void run_gui(Song records[], int& record_count) {
             // -------------------------ПОИСК2----------------------------------------
            
             ImGui::Text("Optimal tree search:");
-            ImGui::InputText("##search2", search_buffer_for_user_input2, sizeof(search_buffer_for_user_input2));
+
+            ImGui::Text("Author:");
             ImGui::SameLine();
+            ImGui::InputText("##search_author", search_buffer_for_user_input2_author, sizeof(search_buffer_for_user_input2_author));
+
+            ImGui::Text("Genre: ");
+            ImGui::SameLine();
+            ImGui::InputText("##search_genre", search_buffer_for_user_input2_genre, sizeof(search_buffer_for_user_input2_genre));
+
             if (ImGui::Button("Find##optimal")) {
                 search_results_count2 = 0;
 
-                if (strlen(search_buffer_for_user_input2) > 0) {
-                    search_results_count2 = find_song_by_title(records, record_count, search_buffer_for_user_input2, search_results2, MAX_RECORDS);
-                    strcpy(last_search_request2, search_buffer_for_user_input2);
+                if (strlen(search_buffer_for_user_input2_author) > 0 && strlen(search_buffer_for_user_input2_genre) > 0) {
+                    
+                    if (!optimal_tree && record_count > 0) {
+                        optimal_tree = build_optimal_composite_tree(records, record_count);
+                    }
+                    
+                    search_results_count2 = search_by_author_and_genre(optimal_tree, search_buffer_for_user_input2_author, search_buffer_for_user_input2_genre, search_results2, MAX_RECORDS);
+
+                    snprintf(last_search_request2, sizeof(last_search_request2), "%s + %s", 
+                                    search_buffer_for_user_input2_author, search_buffer_for_user_input2_genre);
+
                     show_search_result2 = true;
                 } else {
                     show_search_result2 = false;
@@ -531,6 +549,12 @@ void run_gui(Song records[], int& record_count) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
+
+    
+    if (optimal_tree) {
+        free_optimal_composite_tree(optimal_tree);
+    }
+
     delete[] song_ptrs;
     
     ImGui_ImplOpenGL3_Shutdown();

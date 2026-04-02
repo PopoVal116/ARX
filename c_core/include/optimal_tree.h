@@ -3,6 +3,10 @@
 
 #include "record.h"
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 typedef struct ResultCompositeTreeNode {
     char author[100];
     char genre[50];
@@ -36,5 +40,9 @@ int search_by_author_and_genre(ResultCompositeTreeNode *tree,
  * Вызывать при завершении программы
  */
 void free_optimal_composite_tree(ResultCompositeTreeNode *node);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
