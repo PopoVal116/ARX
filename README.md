@@ -1,5 +1,5 @@
-# Music Database Project (Backend)
-Данный репозиторий содержит реализацию **серверной части (Core)** музыкальной базы данных на языке C и ресурсы для графического интерфейса.
+🎵 Music Database Project (Backend)
+Данный репозиторий содержит реализацию серверной части (Core) музыкальной базы данных на языке C и ресурсы для графического интерфейса.
 
 ## Структура проекта
 
@@ -51,10 +51,11 @@ gcc data/generate_test_data.c -I./c_core/include -o data_gen
 ```
 
 ### 3. Сборка GUI
-Для компиляции интерфейса необходимо линковаться с собранной библиотекой:
-
+Для запуска GUI:
 ```Bash
-g++ cpp_gui/main.cpp -L./c_core/build -lcore -lGL -lSDL2 -lGLEW -o music_app
+cd cpp_gui/architecture
+make
+make run
 ```
 
 Статус разработки (Человек №1)
@@ -69,3 +70,9 @@ g++ cpp_gui/main.cpp -L./c_core/build -lcore -lGL -lSDL2 -lGLEW -o music_app
 [x] Binary Search по названию
 [x] Optimal Binary Search Tree (по названию)
 [ ] Тесты и примеры использования
+
+Статус разработки (Человек №3)
+[x] Отображение базы данных
+[x] Добавление записи
+[x] Обработка сортировки
+[x] Обработка поиска
